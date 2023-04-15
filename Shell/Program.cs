@@ -43,6 +43,12 @@ static class Start {
       graph.SaveTo ("c:/etc/test.html");
       var pi = new ProcessStartInfo ("c:/etc/test.html") { UseShellExecute = true };
       Process.Start (pi);
+
+      var xml = new ExprXML (expr);
+      node.Accept(xml);
+      Directory.CreateDirectory ("c:/etc");
+      xml.SaveTo ("c:/etc/test.xml");
+
       Console.Write ("\nPress any key..."); Console.ReadKey (true);
    }
 
