@@ -44,32 +44,20 @@ public class Token {
       WriteLine (file);
       WriteLine (new string ('\u2500', file.Length));
 
-      if (Line > 2) {
-         var (prevText, prevText1) = (Source.Lines[Line - 3], Source.Lines[Line - 2]);
-         WriteLine (string.Format ("{0,4}{1,0}{2,0}", Line - 2, "\u2502", prevText));
-         WriteLine (string.Format ("{0,4}{1,0}{2,0}", Line - 1, "\u2502", prevText1));
+      for (int i = Line - 2; i <= Line + 2; i++) {
+         if (i < 1 || i > Source.Lines.Length) continue;
+         WriteLine ($"{i,4}\u2502{Source.Lines[i - 1]}");
+         if (i == Line) {
+            ForegroundColor = ConsoleColor.Yellow;
+            int padLeft = Column + 4;
+            CursorLeft = padLeft;
+            WriteLine ("^");
+            CursorLeft = Math.Min (Math.Max (0, padLeft - Text.Length / 2), WindowWidth - Text.Length);
+            WriteLine (Text);
+            ResetColor ();
+            continue;
+         }
       }
-      if (Line == 1)
-         WriteLine (string.Format ("{0,4}{1,0}{2,0}", Line - 1, "\u2502", Source.Lines[Line - 1]));
-
-      WriteLine (string.Format ("{0,4}{1,0}{2,0}", Line, "\u2502", Source.Lines[Line - 1]));
-
-      ForegroundColor = ConsoleColor.Yellow;
-      int padLeft = Column + 4;
-      CursorLeft = padLeft;
-      WriteLine ("^");
-      CursorLeft = Math.Min (Math.Max (0, padLeft - Text.Length / 2), WindowWidth - Text.Length);
-      WriteLine (Text);
-      ResetColor ();
-
-      var cnt = Source.Lines.Count ();
-      if (Line + 1 == cnt)
-         WriteLine (string.Format ("{0,4}{1,0}{2,0}", Line + 1, "\u2502", Source.Lines[Line + 1]));
-      if (Line + 2 < cnt) {
-         WriteLine (string.Format ("{0,4}{1,0}{2,0}", Line + 1, "\u2502", Source.Lines[Line + 2]));
-         WriteLine (string.Format ("{0,4}{1,0}{2,0}", Line + 2, "\u2502", Source.Lines[Line + 1]));
-      }
-      ResetColor ();
    }
 
    // Helper used by the parser (maps operator sequences to E values)
