@@ -8,6 +8,7 @@ static class Start {
       Test2 ();      // Test ExprTyper and ExprGrapher
       Test3 ();      // Type checks on various expressions
       Test4 ();      // Tokenizer - printout of invalid token
+      Test5 ();      // Test functional call
    }
 
    // Test ExprEval and ExprILGen
@@ -90,6 +91,29 @@ static class Start {
       Console.WriteLine ();
       Console.Write ("\nPress any key..."); Console.ReadKey (true);
    }
+
+   static void Test5 () {
+      var exp = "12.0 + pi + sin(3.5) + atan2(12, 13.5) + length(\"hello\") + random ()";
+      var dict = new Dictionary<string, NType> () {
+         ["sin"] = NType.Real, ["atan2"] = NType.Real, ["pi"] = NType.Real,
+         ["length"] = NType.Int, ["random"] = NType.Int
+      };
+
+      var node = new Parser (new Tokenizer (exp)).Parse ();
+      node.Accept (new ExprTyper (dict));
+
+      var expGraph = new ExprGrapher (exp);
+      node.Accept (expGraph);
+      Directory.CreateDirectory ("c:/etc");
+      expGraph.SaveTo ("c:/etc/test.html");
+      var pi = new ProcessStartInfo ("c:/etc/test.html") { UseShellExecute = true };
+      Process.Start (pi);
+
+      var expIL = node.Accept (new ExprILGen ());
+      Console.WriteLine ($"\nIL Code = \n{expIL}");
+      Console.Write ("\r\nPress any key..."); Console.ReadKey (true);
+   }
+
    static string Prog0 = """
       program Expr;
       var

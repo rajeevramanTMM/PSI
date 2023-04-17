@@ -1,6 +1,7 @@
 ﻿namespace PSI.Ops;
 using static Token.E;
 using static NType;
+using System.Collections.Generic;
 
 // Computes the type of an expression, using the Visitor pattern
 // This updates the type on each node
@@ -36,5 +37,12 @@ public class ExprTyper : Visitor<NType> {
          (AND or OR, Int or Boolean, Int or Boolean) when a == b => a,
          _ => Error
       };
+   }
+
+   public override NType Visit (NFnCall nFnCall) {
+      foreach (var item in nFnCall.Params)
+         item.Accept (this);
+      nFnCall.Type = mSymbols[nFnCall.Name.Text];
+      return nFnCall.Type;
    }
 }

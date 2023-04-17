@@ -47,6 +47,17 @@ public class ExprGrapher : Visitor<int> {
       mSB.AppendLine ($"id{++mID}{text}");
       return mID;
    }
+
+   public override int Visit (NFnCall nFnCall) {
+      var list = new List<int> ();
+      foreach (var item in nFnCall.Params)
+         list.Add (item.Accept (this));
+      var id = NewNode ($"[{nFnCall.Name.Text} : {nFnCall.Type}]");
+      foreach (var item in list)
+         mSB.AppendLine ($"id{id} --> id{item}");
+      return id;
+   }
+
    readonly StringBuilder mSB = new ();
    readonly string mExpression;
    int mID = 0;
