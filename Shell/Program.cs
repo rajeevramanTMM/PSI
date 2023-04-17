@@ -44,11 +44,8 @@ static class Start {
       var pi = new ProcessStartInfo ("c:/etc/test.html") { UseShellExecute = true };
       Process.Start (pi);
 
-      var xml = new ExprXML (expr);
-      node.Accept(xml);
       Directory.CreateDirectory ("c:/etc");
-      xml.SaveTo ("c:/etc/test.xml");
-
+      File.WriteAllText ("c:/etc/test.xml", node.Accept (new ExprXML (expr)).ToString ());
       Console.Write ("\nPress any key..."); Console.ReadKey (true);
    }
 

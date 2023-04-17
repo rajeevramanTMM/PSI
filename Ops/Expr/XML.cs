@@ -7,47 +7,18 @@ public class ExprXML : Visitor<XElement> {
    public ExprXML (string expression)
       => mExpression = expression;
 
-   public override XElement Visit (NLiteral literal) {
-      var node = new XElement ("Literal");
-      node.SetAttributeValue ("Value", literal.Value.Text);
-      node.SetAttributeValue ("Type", literal.Type);
-      mLines.AppendLine (node.ToString ());
-      return node;
-   }
+   public override XElement Visit (NLiteral literal) =>
+      new XElement ("Literal", new XAttribute ("Value", literal.Value.Text), new XAttribute ("Type", literal.Type));
 
-   public override XElement Visit (NIdentifier identifier) {
-      var node = new XElement ("Ident");
-      node.SetAttributeValue("Name",identifier.Name);
-      node.SetAttributeValue ("Type", identifier.Type);
-      mLines.AppendLine (node.ToString ());
-      return node;
-   }
+   public override XElement Visit (NIdentifier identifier) =>
+      new XElement ("Ident", new XAttribute ("Name", identifier.Name), new XAttribute ("Type", identifier.Type));
 
-   public override XElement Visit (NUnary unary) {
-      var node = new XElement ("Unary");
-      node.SetAttributeValue ("Op", unary.Op.Kind);
-      node.SetAttributeValue ("Type", unary.Type);
-      var node1 = unary.Expr.Accept (this);
-      node.Add (node1);
-      mLines.Clear (); 
-      mLines.Append (node.ToString ());
-      return node;
-   }
+   public override XElement Visit (NUnary unary) =>
+      new XElement ("Unary", new XAttribute ("Op", unary.Op.Kind), new XAttribute ("Type", unary.Type), unary.Expr.Accept (this));
 
-   public override XElement Visit (NBinary binary) {
-      var exlem = new XElement ("Binary");
-      exlem.SetAttributeValue ("Op", binary.Op.Kind);
-      exlem.SetAttributeValue ("Type", binary.Type);
-      mLines.AppendLine (exlem.ToString ());
-      var a = binary.Left.Accept (this); var b = binary.Right.Accept (this);
-      exlem.Add (a); exlem.Add (b);
-      mLines.Clear ();
-      mLines.Append (exlem.ToString ());
-      return exlem;
-   }
+   public override XElement Visit (NBinary binary) =>
+      new XElement ("Binary", new XAttribute ("Op", binary.Op.Kind), new XAttribute ("Type", binary.Type)
+         , binary.Left.Accept (this), binary.Right.Accept (this));
 
-   public void SaveTo (string file) => File.WriteAllText (file, mLines.ToString ()); 
-   
    readonly string mExpression;
-   readonly StringBuilder mLines = new ();
 }
