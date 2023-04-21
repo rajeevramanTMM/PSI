@@ -20,7 +20,9 @@ public class PSIPrint : Visitor<StringBuilder> {
             NWrite ($"{g.Select (a => a.Name).ToCSV ()} : {g.Key};");
          N--;
       }
-      return S;
+      if (d.Funcs.Any ()) d.Funcs.ForEach (f => Visit (f));
+      if (d.Proc.Any ()) d.Proc.ForEach (p => Visit (p));
+         return S;
    }
 
    public override StringBuilder Visit (NVarDecl d)
@@ -81,6 +83,75 @@ public class PSIPrint : Visitor<StringBuilder> {
       Console.Write (txt);
       S.Append (txt);
       return S;
+   }
+
+   public override StringBuilder Visit (NReadStmt r) {
+      NWrite ("Read (");
+      r.List.ForEach (x => Write (x.Text));
+      return Write (");");
+   }
+
+   public override StringBuilder Visit (NCallStmt c) {
+      NWrite (c.Name.Text);
+      Write (" (");
+      c.Expr.ForEach (x => x.Accept (this));
+      return Write (");");
+   }
+
+   public override StringBuilder Visit (NIfStmt ni) {
+      NWrite ("If ");
+      Visit (ni.Expr);
+      Write (" Then");
+      if (ni.Stmts.Length >= 1) Visit (ni.Stmts[0]);
+      if (ni.Stmts.Length >= 2) { NWrite ("else "); Visit (ni.Stmts[1]); }
+      return (Write (""));
+   }
+
+   public override StringBuilder Visit (NWhileStmt w) {
+      NWrite ("While ");
+      Visit (w.Expr);
+      Write (" do");
+      N++;
+      for (int i = 0; i < w.Stmts.Length; i++)
+         Visit (w.Stmts[i]);
+      N--;
+      return Write (";");
+   }
+
+   public override StringBuilder Visit (NRepeatStmt r) {
+      NWrite ("Repeat");
+      N++; Visit (r.Stmts); N--;
+      NWrite ("Until ");
+      return Visit (r.Expr);
+   }
+
+   public override StringBuilder Visit (NForStmt nf) {
+      NWrite ($"for {nf.Name.Text} := ");
+      Visit (nf.Exprs.Expr);
+      Write (nf.To ? " To " : " Downto ");
+      Visit (nf.Exprs.Expr1);
+      Write (" do");
+      N++;
+      Visit (nf.Stmt);
+      N--;
+      return Write ("");
+   }
+
+   public override StringBuilder Visit (NProcDecl p) {
+      NWrite ($"procedure {p.Name.Text} := ");
+      foreach (var g in p.Vars.GroupBy (a => a.Type))
+         Write ($" ({g.Select (a => a.Name).ToCSV ()} : {g.Key});");
+      Visit (p.Block);
+      return Write (";");
+   }
+
+   public override StringBuilder Visit (NFnDecl n) {
+      NWrite ("function ");
+      Write (n.Name.Text);
+      foreach (var g in n.Vars.GroupBy (a => a.Type))
+         Write ($" ({g.Select (a => a.Name).ToCSV ()} : {g.Key});");
+      Visit (n.Block);
+      return Write (";");
    }
 
    readonly StringBuilder S = new ();

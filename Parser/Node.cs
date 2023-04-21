@@ -20,7 +20,7 @@ public record NBlock (NDeclarations Decls, NCompoundStmt Body) : Node {
 }
 
 // The declarations section precedes the body of every block
-public record NDeclarations (NVarDecl[] Vars) : Node {
+public record NDeclarations (NVarDecl[] Vars, NProcDecl[] Proc, NFnDecl[] Funcs) : Node {
    public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
 }
 
@@ -28,6 +28,17 @@ public record NDeclarations (NVarDecl[] Vars) : Node {
 public record NVarDecl (Token Name, NType Type) : Node {
    public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
 }
+
+// At present keeping this as two different declaration not sure whether it can be 
+// merged to single declaration with type as unknown for procedure declaration.
+public record NProcDecl (Token Name, NVarDecl[] Vars, NBlock Block) : Node {
+   public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
+}
+
+public record NFnDecl (Token Name, NVarDecl[] Vars, NType Type, NBlock Block) : Node {
+   public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
+}
+
 #endregion
 
 #region Statements -------------------------------------------------------------
@@ -46,6 +57,30 @@ public record NWriteStmt (bool NewLine, NExpr[] Exprs) : NStmt {
 
 // An assignment statement
 public record NAssignStmt (Token Name, NExpr Expr) : NStmt {
+   public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
+}
+
+public record NReadStmt (Token[] List) : NStmt {
+   public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
+}
+
+public record NCallStmt (Token Name, NExpr[] Expr) : NStmt {
+   public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
+}
+
+public record NIfStmt (NExpr Expr, NStmt[] Stmts) : NStmt {
+   public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
+}
+
+public record NWhileStmt (NExpr Expr, NStmt[] Stmts) : NStmt {
+   public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
+}
+
+public record NRepeatStmt (NStmt[] Stmts, NExpr Expr) : NStmt {
+   public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
+}
+
+public record NForStmt (Token Name, bool To, (NExpr Expr, NExpr Expr1) Exprs, NStmt Stmt) : NStmt {
    public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
 }
 #endregion
