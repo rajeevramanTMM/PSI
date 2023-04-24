@@ -102,19 +102,16 @@ public class PSIPrint : Visitor<StringBuilder> {
       NWrite ("If ");
       Visit (ni.Expr);
       Write (" Then");
-      if (ni.Stmts.Length >= 1) Visit (ni.Stmts[0]);
-      if (ni.Stmts.Length >= 2) { NWrite ("else "); Visit (ni.Stmts[1]); }
-      return (Write (""));
+      Visit (ni.IfStmt);
+      if (ni.ElseStmt is NStmt stmt) { NWrite ("else "); Visit (stmt); }
+      return Write ("");
    }
 
    public override StringBuilder Visit (NWhileStmt w) {
       NWrite ("While ");
       Visit (w.Expr);
       Write (" do");
-      N++;
-      for (int i = 0; i < w.Stmts.Length; i++)
-         Visit (w.Stmts[i]);
-      N--;
+      N++; Visit (w.Stmt); N--;
       return Write (";");
    }
 

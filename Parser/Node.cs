@@ -68,11 +68,11 @@ public record NCallStmt (Token Name, NExpr[] Expr) : NStmt {
    public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
 }
 
-public record NIfStmt (NExpr Expr, NStmt[] Stmts) : NStmt {
+public record NIfStmt (NExpr Expr, NStmt IfStmt, NStmt? ElseStmt) : NStmt {
    public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
 }
 
-public record NWhileStmt (NExpr Expr, NStmt[] Stmts) : NStmt {
+public record NWhileStmt (NExpr Expr, NStmt Stmt) : NStmt {
    public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
 }
 

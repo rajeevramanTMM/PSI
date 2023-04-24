@@ -102,26 +102,25 @@ public class Parser {
       bool to = Match (TO);
       if (!to) Expect (DOWNTO);
       var expr1 = Expression ();
-      Expect (DO, "Expecting do statement");
+      Expect (DO, "Expecting do keyword");
       var stm = Stmt ();
       return new NForStmt (token, to, (expr, expr1), stm);
    }
 
    NIfStmt IfStmt () {
-      var stmts = new List<NStmt> ();
       var expr = Expression ();
       Expect (THEN, "Expecting then statement");
-      stmts.Add (Stmt ()); Match (SEMI);
-      if (Match (ELSE)) { stmts.Add (Stmt ()); Match (SEMI); }
-      return new NIfStmt (expr, stmts.ToArray ());
+      var ifStmt = Stmt (); Match (SEMI);
+      NStmt? elseStmt = null;
+      if (Match (ELSE)) { elseStmt =  Stmt (); Match (SEMI); }
+      return new NIfStmt (expr, ifStmt, elseStmt);
    }
 
    NWhileStmt WhileStmt () {
-      var stm = new List<NStmt> ();
       var expr = Expression ();
-      Expect (DO, "Expecting do statement");
-      while (!Peek (END)) { stm.Add (Stmt ()); Match (SEMI); }
-      return new (expr, stm.ToArray ());
+      Expect (DO, "Expecting do keyword");
+      var stm = Stmt ();
+      return new (expr, stm);
    }
 
    NRepeatStmt RepeatStmt () {
