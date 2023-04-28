@@ -19,8 +19,13 @@ public record NBlock (NDeclarations Declarations, NCompoundStmt Body) : Node {
    public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
 }
 
+// The constant declarations for the program.
+public record NConstDecl (List<Tuple<Token, NLiteral>> Vals) : Node {
+   public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
+}
+
 // The declarations section precedes the body of every block
-public record NDeclarations (NVarDecl[] Vars, NFnDecl[] Funcs) : Node {
+public record NDeclarations (NConstDecl? Consts, NVarDecl[] Vars, NFnDecl[] Funcs) : Node {
    public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
 }
 

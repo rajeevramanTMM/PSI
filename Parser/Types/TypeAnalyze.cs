@@ -152,4 +152,8 @@ public class TypeAnalyze : Visitor<NType> {
       foreach (var node in nodes) node.Accept (this);
       return NType.Void;
    }
+
+   public override NType Visit (NConstDecl nConstDecl) {
+      throw new NotImplementedException ();
+   }
 }
