@@ -30,7 +30,7 @@ public class Parser {
 
    // declarations = [var-decls] [procfn-decls] .
    NDeclarations Declarations () {
-      var consts = Match (CONST) ? ConstDecl () : null;
+      var consts = Match (CONST) ? ConstDecl () : new NConstDecl[0];
       var variables = Match (VAR) ? VarDecls () : new NVarDecl[0];
       List<NFnDecl> funcs = new ();
       while (Match (FUNCTION, PROCEDURE)) {
@@ -45,17 +45,17 @@ public class Parser {
    }
 
    // Parser for const declaration.
-   NConstDecl ConstDecl () {
-      var list = new List<Tuple<Token, NLiteral>> ();
+   NConstDecl[] ConstDecl () {
+      var list = new List<NConstDecl> ();
       while (!Peek (VAR)) {
          var name = Expect (IDENT);
          Expect (EQ);
          var val = mToken;
          if (Match (val.Kind) && Match (SEMI))
-            list.Add (new Tuple<Token, NLiteral> (name, new NLiteral (val)));
+            list.Add (new (name, new (val)));
          else { mToken = Prev; Expect (SEMI); }
       }
-      return new NConstDecl (list);
+      return list.ToArray ();
    }
 
    // ident-list = IDENT { "," IDENT }
