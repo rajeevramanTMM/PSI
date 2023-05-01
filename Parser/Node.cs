@@ -21,6 +21,7 @@ public record NBlock (NDeclarations Declarations, NCompoundStmt Body) : Node {
 
 // The constant declarations for the program.
 public record NConstDecl (Token Name, NLiteral Val) : Node {
+   public NType Type { get; set; }
    public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
 }
 

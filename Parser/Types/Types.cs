@@ -11,6 +11,7 @@ public enum NType { Unknown, Int, Real, Bool, String, Char, Error, Void }
 public class SymTable {
    public List<NVarDecl> Vars = new ();
    public List<NFnDecl> Funcs = new ();
+   public List<NConstDecl> Consts = new ();
    public SymTable? Parent;
 
    public Node? Find (string name) {
@@ -18,6 +19,8 @@ public class SymTable {
       if (node1 != null) return node1;
       var node2 = Funcs.FirstOrDefault (a => a.Name.Text.EqualsIC (name));
       if (node2 != null) return node2;
+      var node3 = Consts.FirstOrDefault (a => a.Name.Text.EqualsIC (name));
+      if (node3 != null) return node3;
       return Parent?.Find (name);
    }
 

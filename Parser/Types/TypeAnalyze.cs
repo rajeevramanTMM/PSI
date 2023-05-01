@@ -23,17 +23,43 @@ public class TypeAnalyze : Visitor<NType> {
    }
 
    public override NType Visit (NDeclarations d) {
-      Visit (d.Vars); return Visit (d.Funcs);
+      Visit (d.Consts);
+      Visit (d.Vars); 
+      return Visit (d.Funcs);
    }
 
    public override NType Visit (NVarDecl d) {
-      mSymbols.Vars.Add (d);
+      switch (mSymbols.Find (d.Name.Text)) {
+         case NVarDecl: throw new ParseException (d.Name, "Already defined in this scope");
+         case NFnDecl: throw new ParseException (d.Name, "name is same as funtion");
+         case NConstDecl: throw new ParseException (d.Name, "name is same as constants");
+         default: mSymbols.Vars.Add (d); break;
+      }
       return d.Type;
    }
 
    public override NType Visit (NFnDecl f) {
+      if (mSymbols.Find (f.Name.Text) is NFnDecl) { throw new ParseException (f.Name, "method already exists"); }
+      if(mSymbols.Find (f.Name.Text) is NConstDecl) { throw new ParseException (f.Name, "is same as constant"); }
+      mSymbols.Funcs.ForEach (x => {
+         var grps = x.Body?.Declarations.Vars.GroupBy (x => x.Name.Text).ToList ();
+         if (grps != null) {
+            foreach (var grp in grps)
+               if (grp.Count () > 1)
+                  throw new ParseException (grp.ToList ()[1].Name, "Already defined in this method");
+         }
+      });
       mSymbols.Funcs.Add (f);
       return f.Return;
+   }
+
+   public override NType Visit (NConstDecl consts) {
+      if (mSymbols.Find (consts.Name.Text) is NFnDecl)
+         throw new ParseException (consts.Name, "Constant name is same as function name");
+      if (mSymbols.Find (consts.Name.Text) is NConstDecl)
+         throw new ParseException (consts.Name, "Constant already defined");
+      mSymbols.Consts.Add (consts);
+      return consts.Type = Visit (consts.Val);
    }
    #endregion
 
@@ -42,6 +68,8 @@ public class TypeAnalyze : Visitor<NType> {
       => Visit (b.Stmts);
 
    public override NType Visit (NAssignStmt a) {
+      if (mSymbols.Find (a.Name.Text) is NConstDecl)
+         throw new ParseException (a.Name, "Constant cannot be assigned");
       if (mSymbols.Find (a.Name.Text) is not NVarDecl v)
          throw new ParseException (a.Name, "Unknown variable");
       a.Expr.Accept (this);
@@ -88,7 +116,8 @@ public class TypeAnalyze : Visitor<NType> {
    }
 
    public override NType Visit (NCallStmt c) {
-      throw new NotImplementedException ();
+      CheckAndCall (c.Name, c.Params);
+      return Void;
    }
    #endregion
 
@@ -139,8 +168,20 @@ public class TypeAnalyze : Visitor<NType> {
       throw new ParseException (d.Name, "Unknown variable");
    }
 
-   public override NType Visit (NFnCall f) {
-      throw new NotImplementedException ();
+   public override NType Visit (NFnCall fc) 
+      => fc.Type = CheckAndCall (fc.Name, fc.Params);
+
+   NType CheckAndCall (Token name, NExpr[] args) {
+      if (mSymbols.Find (name.Text) is not NFnDecl fnDecl)
+         throw new ParseException (name, $"Function \"{name.Text}\" not found");
+      var length = args.Length;
+      if (fnDecl.Params.Length != length) throw new ParseException (name, "Invalid number of parameters");
+      for (int i = 0; i < length; i++) {
+         NExpr expr = args[i];
+         expr.Accept (this);
+         expr = AddTypeCast (fnDecl.Name, expr, fnDecl.Params[i].Type);
+      }
+      return fnDecl.Return;
    }
 
    public override NType Visit (NTypeCast c) {
@@ -151,9 +192,5 @@ public class TypeAnalyze : Visitor<NType> {
    NType Visit (IEnumerable<Node> nodes) {
       foreach (var node in nodes) node.Accept (this);
       return NType.Void;
-   }
-
-   public override NType Visit (NConstDecl nConstDecl) {
-      throw new NotImplementedException ();
    }
 }
