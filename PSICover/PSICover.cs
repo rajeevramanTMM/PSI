@@ -197,6 +197,7 @@ class Analyzer {
    }
 
    void CreateTable (List<BlockInfo> data) {
+      var sorted = data.OrderBy (x => x.Percent);
       var header = new string[] { "File name", "Total hits", "Hit count", "Coverage (%)" };
       var sb = new StringBuilder ();
       sb.Append ("<table>");
@@ -207,7 +208,7 @@ class Analyzer {
          if (i == header.Length - 1) sb.AppendLine ("</tr>");
       }
       
-      foreach (var info in data)
+      foreach (var info in sorted)
          sb.AppendLine ("<tr>").AppendLine (AddCell (info.File)).
             AppendLine (AddCell (info.TotalHits)).
             AppendLine (AddCell (info.HitCount)).
@@ -225,6 +226,7 @@ class Analyzer {
             }   
             th,td {
                 border:1px solid black;
+                height:40px;
             }
             </style>
             <body>
