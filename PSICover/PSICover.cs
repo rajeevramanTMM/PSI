@@ -1,6 +1,7 @@
 ﻿namespace PSICover;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Text;
 
 // The CoverageAnalyzer for .Net
 class Analyzer {
@@ -150,6 +151,7 @@ class Analyzer {
    void GenerateOutputs () {
       ulong[] hits = File.ReadAllLines ($"{Dir}/hits.txt").Select (ulong.Parse).ToArray ();
       var files = mBlocks.Select (a => a.File).Distinct ().ToArray ();
+      var blockInfo = new List<BlockInfo> ();
       foreach (var file in files) {
          var blocks = mBlocks.Where (a => a.File == file)
                              .OrderBy (a => a.SPosition)
@@ -163,12 +165,17 @@ class Analyzer {
          var code = File.ReadAllLines (file);
          for (int i = 0; i < code.Length; i++)
             code[i] = code[i].Replace ('<', '\u00ab').Replace ('>', '\u00bb');
+         ulong hitcnt = 0;
          foreach (var block in blocks) {
             bool hit = hits[block.Id] > 0;
-            string tag = $"<span class=\"{(hit ? "hit" : "unhit")}\">";
-            code[block.ELine] = code[block.ELine].Insert (block.ECol, "</span>");
-            code[block.SLine] = code[block.SLine].Insert (block.SCol, tag);
+            if (hit) hitcnt++;
+            string tag = $"<span class=\"{(hit ? "hit" : "unhit")}\" title=\"{hits[block.Id]} hits\">";
+            for (int i = block.ELine; i >= block.SLine; i--) {
+               code[i] = code[i].Insert (code[i].Length, "</span>");
+               code[i] = code[i].Insert (code[i].TakeWhile (char.IsWhiteSpace).Count (), tag);
+            }
          }
+         blockInfo.Add (new (file, blocks.Count, hitcnt, Math.Round (100.0 * hitcnt / blocks.Count, 1)));
          string htmlfile = $"{Dir}/HTML/{Path.GetFileNameWithoutExtension (file)}.html";
 
          string html = $$"""
@@ -186,6 +193,50 @@ class Analyzer {
       int cBlocks = mBlocks.Count, cHit = hits.Count (a => a > 0);
       double percent = Math.Round (100.0 * cHit / cBlocks, 1);
       Console.WriteLine ($"Coverage: {cHit}/{cBlocks}, {percent}%");
+      CreateTable (blockInfo);
+   }
+
+   void CreateTable (List<BlockInfo> data) {
+      var header = new string[] { "File name", "Total hits", "Hit count", "Coverage (%)" };
+      var sb = new StringBuilder ();
+      sb.Append ("<table>");
+
+      for (int i = 0; i < header.Length; i++) {
+         if (i == 0) sb.AppendLine ("<tr>");
+         sb.AppendLine ($"<th>{header[i]}</th>");
+         if (i == header.Length - 1) sb.AppendLine ("</tr>");
+      }
+      
+      foreach (var info in data)
+         sb.AppendLine ("<tr>").AppendLine (AddCell (info.File)).
+            AppendLine (AddCell (info.TotalHits)).
+            AppendLine (AddCell (info.HitCount)).
+            AppendLine (AddCell (info.Percent)).
+           AppendLine ("</tr>");
+
+      sb.AppendLine ("</table>");
+      string htmlfile = $"{Dir}/HTML/Summary.html";
+      string html = $$"""
+            <html>
+            <style>
+            table{  
+                width:50%;
+                border-collapse: collapse;  
+            }   
+            th,td {
+                border:1px solid black;
+            }
+            </style>
+            <body>
+            <h4>Coverage summary</h4>
+            {{sb}}
+            </body>
+            </html>
+            """;
+      html = html.Replace ("\u00ab", "&lt;").Replace ("\u00bb", "&gt;");
+      File.WriteAllText (htmlfile, html);
+
+      string AddCell (object data) => $"<td>{data}</td>";
    }
 
    // Restore the DLLs and PDBs from the backups
@@ -232,6 +283,9 @@ class Block {
    public readonly string File;
    static string sLastFile = "";
 }
+
+/// <summary>This is used to store the block informations.</summary>
+record BlockInfo (string File, int TotalHits, ulong HitCount, double Percent) { }
 
 static class Program {
    public static void Main () {
