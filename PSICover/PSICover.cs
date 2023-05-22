@@ -165,17 +165,17 @@ class Analyzer {
          var code = File.ReadAllLines (file);
          for (int i = 0; i < code.Length; i++)
             code[i] = code[i].Replace ('<', '\u00ab').Replace ('>', '\u00bb');
-         ulong hitcnt = 0;
+         ulong cHits = 0;
          foreach (var block in blocks) {
             bool hit = hits[block.Id] > 0;
-            if (hit) hitcnt++;
+            if (hit) cHits++;
             string tag = $"<span class=\"{(hit ? "hit" : "unhit")}\" title=\"{hits[block.Id]} hits\">";
             for (int i = block.ELine; i >= block.SLine; i--) {
                code[i] = code[i].Insert (code[i].Length, "</span>");
                code[i] = code[i].Insert (code[i].TakeWhile (char.IsWhiteSpace).Count (), tag);
             }
          }
-         blockInfo.Add (new (file, blocks.Count, hitcnt, Math.Round (100.0 * hitcnt / blocks.Count, 1)));
+         blockInfo.Add (new (file, blocks.Count, cHits, Math.Round (100.0 * cHits / blocks.Count, 1)));
          string htmlfile = $"{Dir}/HTML/{Path.GetFileNameWithoutExtension (file)}.html";
 
          string html = $$"""
