@@ -49,14 +49,15 @@ public class ILCodeGen : Visitor {
 
    public override void Visit (NAssignStmt a) {
       a.Expr.Accept (this);
-      StoreVar (a.Name);
+      ReadWriteVar (a.Name);
    }
 
-   void StoreVar (Token name) {
+   void ReadWriteVar (Token name, bool read = false) {
       var vd = (NVarDecl)mSymbols.Find (name)!;
       var type = TMap[vd.Type];
-      if (vd.Local) Out ($"    stloc {vd.Name}");
-      else Out ($"    stsfld {type} Program::{vd.Name}");
+      (string local, string global) = read ? ("ldloc", "ldsfld") : ("stloc", "stsfld");
+      if (vd.Local) Out ($"    {local} {vd.Name}");
+      else Out ($"    {global} {type} Program::{vd.Name}");
    }
 
    public override void Visit (NWriteStmt w) {
@@ -66,9 +67,36 @@ public class ILCodeGen : Visitor {
       }
       if (w.NewLine) Out ("    call void [System.Console]System.Console::WriteLine ()");
    }
-   
-   public override void Visit (NIfStmt f) => throw new NotImplementedException ();
-   public override void Visit (NForStmt f) => throw new NotImplementedException ();
+
+   public override void Visit (NIfStmt f) {
+      var hasElse = f.ElsePart != null;
+      (string lbl1, string lbl2) = (NextLabel (), "");
+      f.Condition.Accept (this);
+      Out ($"    brfalse {lbl1}");
+      f.IfPart.Accept (this);
+      if (hasElse) { lbl2 = NextLabel (); Out ($"    br {lbl2}"); }
+      Out ($"    {lbl1}:");
+      if (hasElse) { f.ElsePart!.Accept (this); Out ($" {lbl2}:"); }
+   }
+
+   public override void Visit (NForStmt f) {
+      f.Start.Accept (this);
+      ReadWriteVar (f.Var);
+      (string lbl1, string lbl2) = (NextLabel (), NextLabel ());
+      Out ($"    br {lbl2}");
+      Out ($"    {lbl1}:");
+      f.Body.Accept (this);
+      ReadWriteVar (f.Var, read: true);
+      Out (" ldc.i4.1");
+      Out ($" {(f.Ascending ? "add" : "sub")}");
+      ReadWriteVar (f.Var);
+      Out ($"    {lbl2}:");
+      ReadWriteVar (f.Var, read: true);
+      f.End.Accept (this);
+      Out ($"    {(f.Ascending ? "cgt" : "clt")}");
+      Out ($"    brfalse {lbl1}");
+   }
+
    public override void Visit (NReadStmt r) => throw new NotImplementedException ();
 
    public override void Visit (NWhileStmt w) {
@@ -121,7 +149,7 @@ public class ILCodeGen : Visitor {
    public override void Visit (NUnary u) {
       u.Expr.Accept (this);
       string op = u.Op.Kind.ToString ().ToLower ();
-      op = op switch { "sub" => "neg", _ => op };
+      op = op switch { "sub" => "neg", "not" => "ldc.i4.0\n ceq", _ => op };
       Out ($"    {op}");
    }
 
@@ -131,7 +159,12 @@ public class ILCodeGen : Visitor {
          Out ("    call string [System.Runtime]System.String::Concat (string, string)");
       else {
          string op = b.Op.Kind.ToString ().ToLower ();
-         op = op switch { "mod" => "rem", "eq" => "ceq", "lt" => "clt", _ => op };
+         op = op switch { 
+            "mod" => "rem", "eq" => "ceq", "lt" => "clt", "gt" => "cgt",
+            "geq" => "clt\n    ldc.i4.0\n    ceq",
+            "leq" => "cgt\n    ldc.i4.0\n    ceq",
+            "neq" => "ceq\n    ldc.i4.0\n    ceq",
+            _ => op };
          Out ($"    {op}");
       }
    }
