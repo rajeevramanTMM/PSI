@@ -116,6 +116,7 @@ public class ILCodeGen : Visitor {
 
    public override void Visit (NForStmt f) { 
       string labl1 = NextLabel (), labl2 = NextLabel ();
+      PushLabel ();
       f.Start.Accept (this);
       StoreVar (f.Var);
       Out ($"    br {labl2}");
@@ -130,6 +131,7 @@ public class ILCodeGen : Visitor {
       f.End.Accept (this);
       Out (f.Ascending ? "    cgt" : "    clt");
       Out ($"    brfalse {labl1}");
+      PopLabel ();
    }
 
    public override void Visit (NReadStmt r) {
@@ -151,24 +153,43 @@ public class ILCodeGen : Visitor {
 
    public override void Visit (NWhileStmt w) {
       string lab1 = NextLabel (), lab2 = NextLabel ();
+      PushLabel ();
       Out ($"    br {lab2}");
       Out ($"  {lab1}:");
       w.Body.Accept (this);
       Out ($"  {lab2}:");
       w.Condition.Accept (this);
       Out ($"    brtrue {lab1}");
+      PopLabel ();
    }
 
    public override void Visit (NRepeatStmt r) {
       string lab = NextLabel ();
+      PushLabel ();
       Out ($"  {lab}:");
       Visit (r.Stmts);
       r.Condition.Accept (this);
       Out ($"    brfalse {lab}");
+      PopLabel ();
    }
+
+   public override void Visit (NBreakStmt b) {
+      var lvl = b.Level != null ? int.Parse (b.Level.Text) : 1;
+      var idx = mStackLoopLabels.Count - lvl;
+      Out ($"    br {mStackLoopLabels[idx]}");
+   }
+
+   void PushLabel () => mStackLoopLabels.Add (NextLabel ());
+
+   void PopLabel () {
+      var last = mStackLoopLabels.Last ();
+      mStackLoopLabels.RemoveAt (mStackLoopLabels.Count - 1);
+      Out ($"   {last}:");
+   }
+
    string NextLabel () => $"IL_{++mLabel:D4}";
    int mLabel;
-
+   List<string> mStackLoopLabels = new ();
 
    public override void Visit (NCallStmt c) => CallFunction (c.Name, c.Params);
 

@@ -161,5 +161,10 @@ public class PSIPrint : Visitor<StringBuilder> {
       return S;
    }
 
+   public override StringBuilder Visit (NBreakStmt nb) {
+      var level = nb.Level != null ? $" {nb.Level.Text}" : "";
+      return NWrite ($"break{level};");
+   }
+
    readonly StringBuilder S = new ();
 }

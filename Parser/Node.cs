@@ -121,6 +121,11 @@ public record NAssignStmt (Token Name, NExpr Expr) : NStmt {
    public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
    public override void Accept (Visitor visitor) => visitor.Visit (this);
 }
+
+public record NBreakStmt (Token Name, Token? Level) : NStmt {
+   public override T Accept<T> (Visitor<T> visitor) => visitor.Visit (this);
+   public override void Accept (Visitor visitor) => visitor.Visit (this);
+}
 #endregion
 
 #region Expression nodes -------------------------------------------------------

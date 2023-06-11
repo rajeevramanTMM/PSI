@@ -28,6 +28,7 @@ public abstract class Visitor<T> {
    public abstract T Visit (NBinary b);
    public abstract T Visit (NFnCall f);
    public abstract T Visit (NTypeCast t);
+   public abstract T Visit (NBreakStmt nb);
 }
 
 // Visitor interface, unparametrized version
@@ -48,7 +49,7 @@ public abstract class Visitor {
    public abstract void Visit (NWhileStmt w);
    public abstract void Visit (NRepeatStmt r);
    public abstract void Visit (NCallStmt c);
-
+   public abstract void Visit (NBreakStmt b);
    public abstract void Visit (NLiteral t);
    public abstract void Visit (NIdentifier d);
    public abstract void Visit (NUnary u);

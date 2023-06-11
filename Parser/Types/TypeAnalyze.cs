@@ -87,12 +87,14 @@ class TypeAnalyze : Visitor<NType> {
    }
 
    public override NType Visit (NForStmt f) {
+      mBreakLevel++;
       var v = ExpectVar (f.Var);
       if (v.Type != Integer) Fatal (f.Var, "For loop variable must be an integer");
       v.Assigned = true; 
       f.Start = AddTypeCast (f.Start, v.Type);
       f.End = AddTypeCast (f.End, v.Type);
       f.Body.Accept (this);
+      mBreakLevel--;
       return Void;
    }
 
@@ -110,17 +112,28 @@ class TypeAnalyze : Visitor<NType> {
    }
 
    public override NType Visit (NWhileStmt w) {
+      mBreakLevel++;
       w.Condition = AddTypeCast (w.Condition, Bool);
       w.Body.Accept (this);
+      mBreakLevel--;
       return Void; 
    }
 
    public override NType Visit (NRepeatStmt r) {
+      mBreakLevel++;
       Visit (r.Stmts);
       r.Condition = AddTypeCast (r.Condition, Bool);
+      mBreakLevel--;
       return Void;
    }
 
+   public override NType Visit (NBreakStmt nb) {
+      var lvl = nb.Level != null ? int.Parse (nb.Level.Text) : 1;
+      if (lvl > mBreakLevel) Fatal (nb.Level ?? nb.Name, "Not a valid break level");
+      return Void;
+   }
+
+   int mBreakLevel;
    public override NType Visit (NCallStmt c) {
       CheckFunctionCall (c.Name, c.Params);
       return Void; 

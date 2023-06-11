@@ -97,6 +97,7 @@ public class Parser {
          if (Peek (OPEN)) return CallStmt ();
       }
       if (Match (IF)) return IfStmt ();
+      if (Match (BREAK)) return BreakStmt ();
       if (Match (FOR)) return ForStmt ();
       if (Peek (BEGIN)) return CompoundStmt ();
       if (Match (READ, READLN)) return ReadStmt ();
@@ -104,6 +105,13 @@ public class Parser {
       if (Match (REPEAT)) return RepeatStmt ();
       Unexpected ();
       return null!;
+   }
+
+   // break-stmt = "break" [INTEGER].
+   NBreakStmt BreakStmt () {
+      Token? tok = Prev, level = null;
+      if (Peek (L_INTEGER)) level = Expect (L_INTEGER);
+      return new (tok, level);
    }
 
    // compound-stmt = "begin" [ statement { ";" statement } ] "end" .
