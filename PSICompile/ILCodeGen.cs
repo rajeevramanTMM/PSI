@@ -132,7 +132,22 @@ public class ILCodeGen : Visitor {
       Out ($"    brfalse {labl1}");
    }
 
-   public override void Visit (NReadStmt r) => throw new NotImplementedException ();
+   public override void Visit (NReadStmt r) {
+      Out ($" call string [System.Console]System.Console::ReadLine ()");
+      if (r.Var == null) { Out ("    pop"); return; }
+      var name = (NVarDecl)mSymbols.Find (r.Var)!;
+      var type = TMap[name.Type];
+      string keyword = type switch {
+         "bool" => "Boolean",
+         "char" => "Char",
+         "int32" => "Int32",
+         "float64" => "Double",
+         "string" => "String",
+         _ => throw new NotImplementedException ()
+      };
+      Out ($"    call {type} [System.Runtime]System.Convert::To{keyword}(string)");
+      StoreVar (r.Var);
+   }
 
    public override void Visit (NWhileStmt w) {
       string lab1 = NextLabel (), lab2 = NextLabel ();

@@ -95,10 +95,7 @@ public class PSIPrint : Visitor<StringBuilder> {
 
    public override StringBuilder Visit (NReadStmt r) {
       NWrite ("Read (");
-      for (int i = 0; i < r.Vars.Length; i++) {
-         if (i > 0) Write (", ");
-         Write (r.Vars[i].Text); 
-      }
+      if (r.Var != null) Write (r.Var.Text);
       return Write (");");
    }
 
