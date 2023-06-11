@@ -137,7 +137,7 @@ public class ILCodeGen : Visitor {
       if (r.Var == null) { Out ("    pop"); return; }
       var name = (NVarDecl)mSymbols.Find (r.Var)!;
       var type = TMap[name.Type];
-      string keyword = type switch {
+      var ctype = type switch {
          "bool" => "Boolean",
          "char" => "Char",
          "int32" => "Int32",
@@ -145,7 +145,7 @@ public class ILCodeGen : Visitor {
          "string" => "String",
          _ => throw new NotImplementedException ()
       };
-      Out ($"    call {type} [System.Runtime]System.Convert::To{keyword}(string)");
+      Out ($"    call {type} [System.Runtime]System.Convert::To{ctype}(string)");
       StoreVar (r.Var);
    }
 
